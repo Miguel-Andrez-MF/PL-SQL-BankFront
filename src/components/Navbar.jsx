@@ -19,7 +19,7 @@ const Navbar = () => {
     ];
 
     // Todas las vistas disponibles según rol
-    if (rol === 1) { // SuperAdmin
+    if (rol === 4) { // SuperAdmin
       items.push(
         { path: '/clientes', label: 'Clientes', icon: '👥' },
         { path: '/cuentas', label: 'Cuentas', icon: '🏦' },
@@ -27,7 +27,7 @@ const Navbar = () => {
         { path: '/auditorias', label: 'Auditorías', icon: '📊' },
         { path: '/perfil', label: 'Perfil', icon: '👤' }
       );
-    } else if (rol === 2) { // Admin
+    } else if (rol === 1) { // Admin
       items.push(
         { path: '/clientes', label: 'Clientes', icon: '👥' },
         { path: '/cuentas', label: 'Cuentas', icon: '🏦' },
@@ -35,13 +35,13 @@ const Navbar = () => {
         { path: '/auditorias', label: 'Auditorías', icon: '📊' },
         { path: '/perfil', label: 'Perfil', icon: '👤' }
       );
-    } else if (rol === 3) { // Analista
+    } else if (rol === 2) { // Analista
       items.push(
         { path: '/cuentas', label: 'Cuentas', icon: '🏦' },
         { path: '/transacciones', label: 'Transacciones', icon: '💳' },
         { path: '/perfil', label: 'Perfil', icon: '👤' }
       );
-    } else if (rol === 4) { // Cliente
+    } else if (rol === 3) { // Cliente
       items.push(
         { path: '/transacciones', label: 'Transacciones', icon: '💳' },
         { path: '/perfil', label: 'Perfil', icon: '👤' }

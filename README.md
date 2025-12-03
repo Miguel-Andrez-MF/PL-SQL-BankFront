@@ -7,10 +7,10 @@ Aplicación web frontend para el sistema bancario PL-SQL Bank, construida con Re
 - **Auditorías**: Vista de logs de auditoría
 - **Perfil**: Información del usuario y cambio de contraseña
 ## Roles y Permisos
-- **SuperAdmin (rol 1)**: Acceso completo a todas las vistas
-- **Admin (rol 2)**: Acceso a auditorías y transacciones
-- **Analista (rol 3)**: Acceso solo a transacciones (lectura)
-- **Cliente (rol 4)**: Acceso solo a sus transacciones (crear propias)
+- **Admin (rol 1)**: Acceso completo a clientes, cuentas, transacciones y auditorías
+- **Analista (rol 2)**: Acceso a cuentas y transacciones
+- **Cliente (rol 3)**: Acceso solo a sus transacciones
+- **SuperAdmin (rol 4)**: Acceso completo a todas las vistas, puede editar transacciones
 ## Tecnologías
 - React 19
 - React Router DOM

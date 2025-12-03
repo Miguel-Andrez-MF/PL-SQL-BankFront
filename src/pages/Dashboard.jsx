@@ -12,24 +12,29 @@ const Dashboard = () => {
     const rol = user.rolId;
     const views = [];
 
-    if (rol === 1) { // SuperAdmin
+    if (rol === 4) { // SuperAdmin
       views.push(
+        { name: 'Clientes', path: '/clientes' },
+        { name: 'Cuentas', path: '/cuentas' },
         { name: 'Transacciones', path: '/transacciones' },
         { name: 'Auditorías', path: '/auditorias' },
         { name: 'Perfil', path: '/perfil' }
       );
-    } else if (rol === 2) { // Admin
+    } else if (rol === 1) { // Admin
       views.push(
+        { name: 'Clientes', path: '/clientes' },
+        { name: 'Cuentas', path: '/cuentas' },
         { name: 'Transacciones', path: '/transacciones' },
         { name: 'Auditorías', path: '/auditorias' },
         { name: 'Perfil', path: '/perfil' }
       );
-    } else if (rol === 3) { // Analista
+    } else if (rol === 2) { // Analista
       views.push(
+        { name: 'Cuentas', path: '/cuentas' },
         { name: 'Transacciones', path: '/transacciones' },
         { name: 'Perfil', path: '/perfil' }
       );
-    } else if (rol === 4) { // Cliente
+    } else if (rol === 3) { // Cliente
       views.push(
         { name: 'Transacciones', path: '/transacciones' },
         { name: 'Perfil', path: '/perfil' }

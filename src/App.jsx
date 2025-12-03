@@ -36,7 +36,7 @@ function App() {
           <Route
             path="/auditorias"
             element={
-              <ProtectedRoute allowedRoles={[1, 2]}>
+              <ProtectedRoute allowedRoles={[1, 4]}>
                 <Auditorias />
               </ProtectedRoute>
             }
@@ -52,7 +52,7 @@ function App() {
           <Route
             path="/clientes"
             element={
-              <ProtectedRoute allowedRoles={[1, 2, 3]}>
+              <ProtectedRoute allowedRoles={[1, 4]}>
                 <Clientes />
               </ProtectedRoute>
             }
@@ -60,7 +60,7 @@ function App() {
           <Route
             path="/cuentas"
             element={
-              <ProtectedRoute allowedRoles={[1, 2, 3]}>
+              <ProtectedRoute allowedRoles={[1, 2, 4]}>
                 <Cuentas />
               </ProtectedRoute>
             }

@@ -43,7 +43,7 @@ const Transacciones = () => {
 
   const handleCreate = async () => {
     try {
-      if (user.rolId === 1) {
+      if (user.rolId === 4) {
         setError('Los super-administradores no pueden realizar transacciones.');
         return;
       }
@@ -108,12 +108,12 @@ const Transacciones = () => {
     const rol = user.rolId;
     return (
       <div className="space-x-2">
-        {rol === 1 && (
+        {rol === 4 && (
           <Button variant="secondary" onClick={() => openEditModal(row)} size="sm">
             Editar
           </Button>
         )}
-        {(rol === 3 || rol === 4) && (
+        {(rol === 1 || rol === 2 || rol === 3) && (
           <Button variant="primary" onClick={() => setShowCreateModal(true)}>
             Nueva Transacción
           </Button>
