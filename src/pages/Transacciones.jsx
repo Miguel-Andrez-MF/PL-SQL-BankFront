@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { transaccionService } from '../services/transaccionService';
 import { cuentaService } from '../services/cuentaService';
@@ -17,6 +17,7 @@ const Transacciones = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [cuentaUsuario, setCuentaUsuario] = useState(null);
   const [formData, setFormData] = useState({
     cuentaId: '',
     cuentaOrigen: '',
@@ -35,10 +36,25 @@ const Transacciones = () => {
 
   const headers = ['ID Transacción', 'Cuenta ID', 'Tipo de Transacción', 'Monto', 'Fecha'];
 
+  const fetchCuentaUsuario = useCallback(async () => {
+    if (user && user.rolId === 3 && user.clienteId) {
+      try {
+        const data = await cuentaService.getByCliente(user.clienteId);
+        if (data && data.length > 0) {
+          setCuentaUsuario(data[0]); // Asumir primera cuenta
+          setFilters(prev => ({ ...prev, cuentaId: data[0].cuentaId })); // Filtrar por su cuenta
+        }
+      } catch (error) {
+        setError(error.message || 'Error al cargar cuenta del usuario');
+      }
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchTransacciones();
     fetchCuentas();
-  }, []);
+    fetchCuentaUsuario();
+  }, [user, fetchCuentaUsuario]);
 
   useEffect(() => {
     setPage(1);
@@ -77,18 +93,37 @@ const Transacciones = () => {
       let transaccionData;
 
       if (parseInt(formData.tipoTransaccion) === 3) { // Transferencia
-        transaccionData = {
-          cuentaOrigen: formData.cuentaOrigen,
-          cuentaDestino: formData.cuentaDestino,
-          monto: parseFloat(formData.monto),
-          tipoTransacId: parseInt(formData.tipoTransaccion)
-        };
-      } else {
-        transaccionData = {
-          cuentaId: formData.cuentaId,
-          monto: parseFloat(formData.monto),
-          tipoTransacId: parseInt(formData.tipoTransaccion)
-        };
+        if (user.rolId === 3 && cuentaUsuario) {
+          // Cliente: origen es su cuenta
+          transaccionData = {
+            cuentaOrigen: cuentaUsuario.cuentaId,
+            cuentaDestino: formData.cuentaDestino,
+            monto: parseFloat(formData.monto),
+            tipoTransacId: parseInt(formData.tipoTransaccion)
+          };
+        } else {
+          transaccionData = {
+            cuentaOrigen: formData.cuentaOrigen,
+            cuentaDestino: formData.cuentaDestino,
+            monto: parseFloat(formData.monto),
+            tipoTransacId: parseInt(formData.tipoTransaccion)
+          };
+        }
+      } else { // Depósito o Retiro
+        if (user.rolId === 3 && cuentaUsuario) {
+          // Cliente: usar su cuenta
+          transaccionData = {
+            cuentaId: cuentaUsuario.cuentaId,
+            monto: parseFloat(formData.monto),
+            tipoTransacId: parseInt(formData.tipoTransaccion)
+          };
+        } else {
+          transaccionData = {
+            cuentaId: formData.cuentaId,
+            monto: parseFloat(formData.monto),
+            tipoTransacId: parseInt(formData.tipoTransaccion)
+          };
+        }
       }
 
       await transaccionService.create(transaccionData);
@@ -142,14 +177,9 @@ const Transacciones = () => {
   const totalPages = Math.ceil(filteredTransacciones.length / pageSize);
 
   const renderActions = (row) => { // eslint-disable-line no-unused-vars
-    const rol = user.rolId;
     return (
       <div className="space-x-2">
-        {(rol === 1 || rol === 2 || rol === 3) && (
-          <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-            Nueva Transacción
-          </Button>
-        )}
+        {/* Acciones adicionales si es necesario */}
       </div>
     );
   };
@@ -183,18 +213,27 @@ const Transacciones = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta</label>
-              <select
-                value={filters.cuentaId}
-                onChange={(e) => setFilters({ ...filters, cuentaId: e.target.value })}
-                className="w-full px-3 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Todas las cuentas</option>
-                {cuentas.map((cuenta) => (
-                  <option key={cuenta.cuentaId} value={cuenta.cuentaId}>
-                    {cuenta.cuentaId}
-                  </option>
-                ))}
-              </select>
+              {user.rolId === 3 && cuentaUsuario ? (
+                <input
+                  type="text"
+                  value={cuentaUsuario.cuentaId}
+                  readOnly
+                  className="w-full px-3 py-2 border rounded-md border-gray-300 bg-gray-100"
+                />
+              ) : (
+                <select
+                  value={filters.cuentaId}
+                  onChange={(e) => setFilters({ ...filters, cuentaId: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Todas las cuentas</option>
+                  {cuentas.map((cuenta) => (
+                    <option key={cuenta.cuentaId} value={cuenta.cuentaId}>
+                      {cuenta.cuentaId}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Transacción</label>
@@ -229,6 +268,15 @@ const Transacciones = () => {
             </div>
           </div>
         </div>
+
+        {/* Botón Nueva Transacción */}
+        {(user.rolId === 1 || user.rolId === 2 || user.rolId === 3) && (
+          <div className="mb-4">
+            <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+              Nueva Transacción
+            </Button>
+          </div>
+        )}
 
         <div className="bg-white rounded-lg border border-gray-200">
           <Table headers={headers} data={formattedData} actions={renderActions} />
@@ -278,24 +326,38 @@ const Transacciones = () => {
             </div>
 
             {formData.tipoTransaccion && parseInt(formData.tipoTransaccion) === 3 ? (
-              // Transferencia: cuenta origen y destino
+              // Transferencia
               <>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta Origen</label>
-                  <select
-                    value={formData.cuentaOrigen}
-                    onChange={(e) => setFormData({ ...formData, cuentaOrigen: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Seleccionar cuenta origen</option>
-                    {cuentas.map((cuenta) => (
-                      <option key={cuenta.cuentaId} value={cuenta.cuentaId}>
-                        {cuenta.cuentaId}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {user.rolId === 3 && cuentaUsuario ? (
+                  // Cliente: origen fijo
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta Origen</label>
+                    <input
+                      type="text"
+                      value={cuentaUsuario.cuentaId}
+                      readOnly
+                      className="w-full px-3 py-2 border rounded-md border-gray-300 bg-gray-100"
+                    />
+                  </div>
+                ) : (
+                  // Otros roles: select origen
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta Origen</label>
+                    <select
+                      value={formData.cuentaOrigen}
+                      onChange={(e) => setFormData({ ...formData, cuentaOrigen: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Seleccionar cuenta origen</option>
+                      {cuentas.map((cuenta) => (
+                        <option key={cuenta.cuentaId} value={cuenta.cuentaId}>
+                          {cuenta.cuentaId}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta Destino</label>
                   <select
@@ -305,7 +367,7 @@ const Transacciones = () => {
                     required
                   >
                     <option value="">Seleccionar cuenta destino</option>
-                    {cuentas.map((cuenta) => (
+                    {cuentas.filter(c => c.cuentaId !== (user.rolId === 3 && cuentaUsuario ? cuentaUsuario.cuentaId : formData.cuentaOrigen)).map((cuenta) => (
                       <option key={cuenta.cuentaId} value={cuenta.cuentaId}>
                         {cuenta.cuentaId}
                       </option>
@@ -314,23 +376,37 @@ const Transacciones = () => {
                 </div>
               </>
             ) : formData.tipoTransaccion && (parseInt(formData.tipoTransaccion) === 1 || parseInt(formData.tipoTransaccion) === 2) ? (
-              // Depósito o Retiro: cuenta única
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta</label>
-                <select
-                  value={formData.cuentaId}
-                  onChange={(e) => setFormData({ ...formData, cuentaId: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Seleccionar cuenta</option>
-                  {cuentas.map((cuenta) => (
-                    <option key={cuenta.cuentaId} value={cuenta.cuentaId}>
-                      {cuenta.cuentaId}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              // Depósito o Retiro
+              user.rolId === 3 && cuentaUsuario ? (
+                // Cliente: cuenta fija
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta</label>
+                  <input
+                    type="text"
+                    value={cuentaUsuario.cuentaId}
+                    readOnly
+                    className="w-full px-3 py-2 border rounded-md border-gray-300 bg-gray-100"
+                  />
+                </div>
+              ) : (
+                // Otros roles: select cuenta
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta</label>
+                  <select
+                    value={formData.cuentaId}
+                    onChange={(e) => setFormData({ ...formData, cuentaId: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Seleccionar cuenta</option>
+                    {cuentas.map((cuenta) => (
+                      <option key={cuenta.cuentaId} value={cuenta.cuentaId}>
+                        {cuenta.cuentaId}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )
             ) : null}
 
             <Input
