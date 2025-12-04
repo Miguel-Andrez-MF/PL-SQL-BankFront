@@ -17,6 +17,8 @@ const Transacciones = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [cuentaUsuario, setCuentaUsuario] = useState(null);
   const [formData, setFormData] = useState({
     cuentaId: '',
@@ -136,6 +138,24 @@ const Transacciones = () => {
     }
   };
 
+  const handleEdit = async () => {
+    try {
+      const updates = {
+        monto: parseFloat(formData.monto),
+        tipoTransaccionId: parseInt(formData.tipoTransaccion)
+      };
+
+      await transaccionService.update(editingTransaction.transaccionId, updates);
+      setSuccess('Transacción actualizada exitosamente');
+      setShowEditModal(false);
+      setEditingTransaction(null);
+      resetForm();
+      fetchTransacciones();
+    } catch (error) {
+      setError(error.error || error.message || 'Error al actualizar transacción');
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       cuentaId: '',
@@ -144,6 +164,15 @@ const Transacciones = () => {
       tipoTransaccion: '',
       monto: ''
     });
+  };
+
+  const openEditModal = (transaction) => {
+    setEditingTransaction(transaction);
+    setFormData({
+      tipoTransaccion: transaction.tipoTransacId.toString(),
+      monto: transaction.monto.toString()
+    });
+    setShowEditModal(true);
   };
 
   const formatMonto = (monto) => {
@@ -176,10 +205,15 @@ const Transacciones = () => {
   const paginatedTransacciones = filteredTransacciones.slice((page - 1) * pageSize, page * pageSize);
   const totalPages = Math.ceil(filteredTransacciones.length / pageSize);
 
-  const renderActions = (row) => { // eslint-disable-line no-unused-vars
+  const renderActions = (row) => {
+    const rol = user.rolId;
     return (
       <div className="space-x-2">
-        {/* Acciones adicionales si es necesario */}
+        {rol === 4 && (
+          <Button variant="secondary" onClick={() => openEditModal(row)} size="sm">
+            Editar
+          </Button>
+        )}
       </div>
     );
   };
@@ -425,6 +459,44 @@ const Transacciones = () => {
               </Button>
               <Button variant="primary" type="submit">
                 Crear Transacción
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Modal Editar */}
+        <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Editar Transacción">
+          <form onSubmit={(e) => { e.preventDefault(); handleEdit(); }}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Transacción</label>
+              <select
+                value={formData.tipoTransaccion}
+                onChange={(e) => setFormData({ ...formData, tipoTransaccion: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Seleccionar tipo</option>
+                <option value="1">Depósito</option>
+                <option value="2">Retiro</option>
+                <option value="3">Transferencia</option>
+              </select>
+            </div>
+            <Input
+              label="Monto (€)"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.monto}
+              onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
+              placeholder="0.00"
+              required
+            />
+            <div className="flex justify-end space-x-3 mt-6">
+              <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                Cancelar
+              </Button>
+              <Button variant="primary" type="submit">
+                Guardar Cambios
               </Button>
             </div>
           </form>

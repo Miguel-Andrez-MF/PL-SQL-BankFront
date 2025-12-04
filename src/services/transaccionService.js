@@ -45,13 +45,12 @@ export const transaccionService = {
     }
   },
 
-  // Remover update ya que no hay endpoint en el backend
-  // update: async (id, updates) => {
-  //   try {
-  //     const response = await api.patch(`/api/transacciones/${id}`, updates);
-  //     return response.data;
-  //   } catch (error) {
-  //     throw error.response?.data || { message: 'Error al actualizar transacción' };
-  //   }
-  // }
+  update: async (id, updates) => {
+    try {
+      const response = await api.patch(`/api/transacciones/${id}`, updates);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Error al actualizar transacción' };
+    }
+  }
 };
