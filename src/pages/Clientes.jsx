@@ -126,9 +126,9 @@ const Clientes = () => {
     'Cliente ID': cliente.clienteId,
     'Nombre': cliente.nombre,
     'Identificación': cliente.identificacion,
-    'Dirección': cliente.direccion || 'N/A',
-    'Teléfono': cliente.telefono || 'N/A',
-    'Email': cliente.email || 'N/A',
+    'Dirección': cliente.direccion || '',
+    'Teléfono': cliente.telefono || '',
+    'Email': cliente.email || '',
     'Total Cuentas': cliente.totalCuentas || 0,
     'Saldo Total': cliente.saldoTotal ? `$${cliente.saldoTotal.toFixed(2)}` : '$0.00',
     ...cliente

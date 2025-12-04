@@ -10,7 +10,8 @@ const api = axios.create({
 // Interceptor para agregar X-User-ID automáticamente donde sea necesario
 api.interceptors.request.use((config) => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  if (user.usuarioId && config.url?.includes('/transacciones') && config.method === 'post') {
+  // No agregar X-User-ID para GET /api/clientes
+  if (user.usuarioId && !(config.method === 'get' && config.url?.includes('/api/clientes'))) {
     config.headers['X-User-ID'] = user.usuarioId;
   }
   return config;
